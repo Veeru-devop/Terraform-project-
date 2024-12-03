@@ -1,0 +1,57 @@
+properties([
+    parameters([
+        string(
+            defaultValue: 'dev',
+            name: 'Environment'
+        ),
+        choice(
+            choices: ['plan', 'apply', 'destroy'], 
+            name: 'Terraform_Action'
+        )])
+])
+pipeline {
+    agent any
+    stages {
+        stage('Preparing') {
+            steps {
+                sh 'echo Preparing'
+            }
+        }
+        stage('Git Pulling') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Veeru-devop/Terraform-project-.git'
+            }
+        }
+        stage('Init') {
+            steps {
+                withAWS(credentials: 'awscredentials', region: 'eu-north-1') {
+                sh 'terraform init'
+                }
+            }
+        }
+        stage('Validate') {
+            steps {
+                withAWS(credentials: 'awscredentials', region: 'eu-north-1') {
+                sh 'terraform validate'
+                }
+            }
+        }
+        stage('Action') {
+            steps {
+                withAWS(credentials: 'awscredentials', region: 'eu-north-1') {
+                    script {    
+                        if (params.Terraform_Action == 'plan') {
+                            sh "terraform plan"
+                        }   else if (params.Terraform_Action == 'apply') {
+                            sh "terraform apply -auto-approve"
+                        }   else if (params.Terraform_Action == 'destroy') {
+                            sh "terraform destroy -auto-approve"
+                        } else {
+                            error "Invalid value"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
