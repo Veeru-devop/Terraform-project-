@@ -145,9 +145,6 @@ resource "aws_instance" "webserver2" {
 
   vpc_security_group_ids = [aws_security_group.websg.id]
 
-  user_data = base64encode(file("userdat.sh"))
-
-
 
 }
 
